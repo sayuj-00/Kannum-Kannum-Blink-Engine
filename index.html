@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kannum Kannum — 2D Cartoon Blink Detector</title>
+  <meta name="description" content="Real-time webcam blink counter with hilarious 2D cartoon hero animation — Kannum Kannum" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-stage:   #fdfcf7;
+      --bg-dark:    #0a081d;
+      --accent:     #FF5E7E;
+      --accent2:    #FFAE33;
+      --ink:        #111111;
+      --card-bg:    rgba(255, 255, 255, 0.05);
+      --card-border:rgba(255, 255, 255, 0.12);
+      --ground-y:   75%;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg-dark);
+      color: #fff;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /*  HERO LANDING STAGE (Clean, Minimalist 2D Cartoon Canvas)           */
+    /* ═══════════════════════════════════════════════════════════════════ */
+
+    #landing {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: radial-gradient(circle at 50% 40%, #ffffff 0%, #f4f3ea 70%, #eae7dc 100%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #landing.out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Ground guide line - minimal cartoon horizon */
+    .cartoon-ground {
+      position: absolute;
+      top: var(--ground-y);
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: #111;
+      opacity: 0.12;
+      border-radius: 2px;
+    }
+
+    /* Skip button for quick testing */
+    #btn-skip {
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      background: rgba(17, 17, 17, 0.06);
+      border: 1.5px solid rgba(17, 17, 17, 0.15);
+      color: #333;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 30px;
+      cursor: pointer;
+      z-index: 300;
+      transition: all 0.2s ease;
+      letter-spacing: 0.04em;
+    }
+    #btn-skip:hover {
+      background: #111;
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    /* ─── Center Title & Action Area ("Kannum Kannum") ────────────────── */
+    #hero-cta {
+      position: absolute;
+      top: 24%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      text-align: center;
+      opacity: 0;
+      z-index: 250;
+      pointer-events: none;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+    }
+
+    #hero-cta.reveal {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .hero-title-main {
+      font-family: 'Baloo 2', cursive;
+      font-size: clamp(52px, 8vw, 86px);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .hero-title-main .accent {
+      background: linear-gradient(135deg, #FF3366 0%, #FF8A00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-tagline {
+      font-size: 15px;
+      font-weight: 800;
+      color: #666;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    #btn-hero-cam {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 22px;
+      padding: 16px 42px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+      background: linear-gradient(135deg, #FF3366 0%, #FF7A00 100%);
+      border: none;
+      border-radius: 60px;
+      cursor: pointer;
+      box-shadow: 0 12px 35px rgba(255, 60, 100, 0.45);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    #btn-hero-cam:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 18px 45px rgba(255, 60, 100, 0.6);
+    }
+    #btn-hero-cam:active {
+      transform: scale(0.98);
+    }
+    #btn-hero-cam::after {
+      content: '';
+      position: absolute;
+      inset: -5px;
+      border-radius: 65px;
+      border: 2px solid rgba(255, 60, 100, 0.4);
+      animation: pulseHero 2s infinite ease-out;
+    }
+    @keyframes pulseHero {
+      0% { transform: scale(1); opacity: 0.9; }
+      100% { transform: scale(1.15); opacity: 0; }
+    }
+
+    /* ─── Cartoon Stage Container ─────────────────────────────────────── */
+    #stage-container {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    /* Base Character Wrappers */
+    .cartoon-char {
+      position: absolute;
+      top: calc(var(--ground-y) - 195px);
+      width: 140px;
+      height: 200px;
+      transform-origin: bottom center;
+      transition: filter 0.2s;
+    }
+
+    #char1 {
+      left: 50%;
+      transform: translateX(-120vw);
+    }
+
+    #char2 {
+      left: 50%;
+      transform: translateX(120vw) scaleX(-1); /* Facing left */
+    }
+
+    /* Character Body Elements */
+    .char-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* Face States */
+    .face-normal, .face-shock, .face-dizzy, .face-side, .pose-sit, .pose-stand {
+      transition: opacity 0.15s ease;
+    }
+    .face-shock, .face-dizzy, .face-side, .pose-sit {
+      display: none;
+    }
+
+    /* Orbiting Stars Container (Around Heads) */
+    .orbit-stars {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      width: 100px;
+      height: 35px;
+      margin-left: -50px;
+      display: none;
+      pointer-events: none;
+    }
+    .orbit-star {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      animation: orbitPath 1.6s linear infinite;
+    }
+    .orbit-star:nth-child(2) { animation-delay: -0.53s; }
+    .orbit-star:nth-child(3) { animation-delay: -1.06s; }
+
+    @keyframes orbitPath {
+      0%   { transform: translate(0, 0) scale(0.7); z-index: 1; }
+      25%  { transform: translate(38px, 10px) scale(1.1); z-index: 5; }
+      50%  { transform: translate(76px, 0) scale(0.7); z-index: 1; }
+      75%  { transform: translate(38px, -10px) scale(0.5); z-index: 0; }
+      100% { transform: translate(0, 0) scale(0.7); z-index: 1; }
+    }
+
+    /* Dizzy Eye Spiral Rotation */
+    @keyframes spinSpiral {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .spiral-eye {
+      transform-origin: center;
+      animation: spinSpiral 1.2s linear infinite;
+    }
+
+    /* ─── Collision / Comic Explosion FX ───────────────────────────────── */
+    #impact-fx {
+      position: absolute;
+      top: calc(var(--ground-y) - 130px);
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      width: 260px;
+      height: 260px;
+      pointer-events: none;
+      z-index: 200;
+      opacity: 0;
+    }
+
+    /* Impact Rays */
+    .impact-rays {
+      position: absolute;
+      inset: 0;
+      transform-origin: center;
+    }
+
+    /* Smoke Cloud Puffs */
+    .smoke-puff-group {
+      transform-origin: center;
+    }
+
+    /* Flying Comic Stars & Lightning Bolts */
+    .flying-spark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      opacity: 0;
+    }
+
+    /* ─── Skidding Smoke Puffs (At Surprise Brake) ─────────────────────── */
+    .skid-puff {
+      position: absolute;
+      top: calc(var(--ground-y) - 16px);
+      width: 32px;
+      height: 22px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #skid-l { left: calc(50% - 135px); transform: scaleX(-1); }
+    #skid-r { left: calc(50% + 105px); }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /*  CAMERA WORKSPACE (With Live Detector & Past Score Panel)           */
+    /* ═══════════════════════════════════════════════════════════════════ */
+
+    #cam-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+      overflow-y: auto;
+    }
+
+    #cam-screen.on {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Header Bar */
+    .cam-nav {
+      height: 68px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 8, 29, 0.7);
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+    }
+
+    .cam-brand {
+      font-family: 'Baloo 2', cursive;
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .cam-brand span {
+      background: linear-gradient(135deg, #FF3366, #FFAE33);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #4ade80;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .badge-live::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+
+    /* Main Dashboard Layout (2 Columns: Camera Area & Past Scores) */
+    .cam-layout {
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 32px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 32px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      .cam-layout {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+    }
+
+    /* Left: Live Camera Station */
+    .cam-main-station {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+    }
+
+    .counter-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .counter-label {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    #blink-count {
+      font-family: 'Baloo 2', cursive;
+      font-size: 88px;
+      font-weight: 800;
+      line-height: 0.95;
+      color: #fff;
+      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #blink-count.bump {
+      transform: scale(1.22);
+      color: #FF5E7E;
+    }
+
+    .feed-container {
+      position: relative;
+      width: 520px;
+      max-width: 100%;
+      aspect-ratio: 4/3;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #000;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    #webcam {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .cam-overlay-guide {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .eye-guide-oval {
+      width: 62%;
+      height: 48%;
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+    }
+
+    /* Control Buttons */
+    .cam-controls {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .btn-ctrl {
+      padding: 12px 28px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      border-radius: 50px;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-ctrl:hover {
+      transform: translateY(-2px);
+    }
+    .btn-ctrl:active {
+      transform: translateY(0);
+    }
+
+    #btn-stop-cam {
+      background: #ef4444;
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+    }
+    #btn-stop-cam:hover {
+      background: #dc2626;
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+    }
+
+    #btn-restart-cam {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+      display: none; /* Shown when stopped */
+    }
+    #btn-restart-cam:hover {
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+    }
+
+    #btn-reset-cam {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    #btn-reset-cam:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .status-msg {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      min-height: 1.4em;
+    }
+    .error-msg {
+      font-size: 13px;
+      color: #f87171;
+      font-weight: 700;
+      min-height: 1.4em;
+    }
+
+    /* Right: Past Scores History Panel */
+    .history-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 14px;
+    }
+
+    .history-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #btn-clear-history {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    #btn-clear-history:hover {
+      color: #f87171;
+    }
+
+    /* Stats High-Score Cards */
+    .history-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 12px 14px;
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    .stat-value {
+      font-family: 'Baloo 2', cursive;
+      font-size: 26px;
+      font-weight: 800;
+      color: #FFD93D;
+      line-height: 1.1;
+      margin-top: 2px;
+    }
+
+    /* Score List */
+    .scores-list-container {
+      max-height: 420px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+    }
+
+    .scores-list-container::-webkit-scrollbar {
+      width: 5px;
+    }
+    .scores-list-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+    }
+
+    .score-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+    .score-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .score-item-left {
+      display: flex;
+      flex-direction: column;
+    }
+    .score-session-tag {
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .score-timestamp {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .score-item-val {
+      font-family: 'Baloo 2', cursive;
+      font-size: 22px;
+      font-weight: 800;
+      color: #FF5E7E;
+    }
+    .score-item.is-best .score-item-val {
+      color: #FFD93D;
+    }
+    .score-item.is-best .score-session-tag::after {
+      content: ' 👑 BEST';
+      color: #FFD93D;
+      font-size: 10px;
+    }
+
+    .no-scores-msg {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 13px;
+      padding: 30px 10px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  LANDING PAGE: 2D CARTOON ANIMATION HERO                            -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="landing">
+
+  <!-- Minimal Cartoon Horizon Line -->
+  <div class="cartoon-ground"></div>
+
+  <!-- Skip Button -->
+  <button id="btn-skip" title="Skip animation and launch camera">Skip Intro ⏭</button>
+
+  <!-- Kannum Kannum Title & Action Pop-Up -->
+  <div id="hero-cta">
+    <div class="hero-title-main">
+      <span>kannum</span>
+      <span class="accent">kannum</span>
+    </div>
+    <div class="hero-tagline">Real-Time Webcam Blink Counter</div>
+    <button id="btn-hero-cam">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+        <circle cx="12" cy="13" r="4"></circle>
+      </svg>
+      Turn on the Camera
+    </button>
+  </div>
+
+  <!-- Stage Container for Fixed Straight-on View -->
+  <div id="stage-container">
+
+    <!-- ── CHARACTER 1 (Enters Left) ─────────────────────────────────── -->
+    <div class="cartoon-char" id="char1">
+
+      <!-- Orbiting Stars (Dizzy state) -->
+      <div class="orbit-stars" id="orbit1">
+        <svg class="orbit-star" viewBox="0 0 24 24" fill="#FFD700" stroke="#111" stroke-width="2">
+          <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
+        </svg>
+        <svg class="orbit-star" viewBox="0 0 24 24" fill="#FF8A00" stroke="#111" stroke-width="2">
+          <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
+        </svg>
+        <svg class="orbit-star" viewBox="0 0 24 24" fill="#FFD700" stroke="#111" stroke-width="2">
+          <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
+        </svg>
+      </div>
+
+      <svg class="char-svg" viewBox="0 0 140 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Standing / Walking Pose -->
+        <g id="c1-pose-walk" class="pose-stand">
+          <!-- Simple Thin Body -->
+          <line x1="70" y1="94" x2="70" y2="146" stroke="#111" stroke-width="4.5" stroke-linecap="round"/>
+          <!-- Swinging Arms -->
+          <path id="c1-arm-l" d="M70 102 L46 130" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          <path id="c1-arm-r" d="M70 102 L94 130" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          <!-- Swinging Legs -->
+          <path id="c1-leg-l" d="M70 146 L52 192 L40 192" stroke="#111" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path id="c1-leg-r" d="M70 146 L88 192 L100 192" stroke="#111" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+
+        <!-- Sitting Flat Pose (After Collision) -->
+        <g id="c1-pose-sit" class="pose-sit">
+          <!-- Squashed low body -->
+          <line x1="70" y1="94" x2="70" y2="152" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+          <!-- Arms resting limp/propped on floor -->
+          <path d="M70 105 L40 142 L32 152" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          <path d="M70 105 L100 142 L108 152" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          <!-- Legs sprawled flat out forward -->
+          <path d="M70 152 L36 172 L22 170" stroke="#111" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M70 152 L104 172 L118 170" stroke="#111" stroke-width="4.5" stroke-linecap="round"/>
+        </g>
+
+        <!-- Head & Face (Large round white head with thick clean outline) -->
+        <g id="c1-head-group">
+          <!-- Swirl hair tuft -->
+          <path d="M70 16 Q62 6 72 8 Q82 11 74 16" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="70" cy="55" r="38" fill="#ffffff" stroke="#111111" stroke-width="4.2"/>
+
+          <!-- 1. Normal Goofy Face -->
+          <g id="c1-face-normal" class="face-normal">
+            <!-- Huge expressive eyes -->
+            <circle cx="56" cy="52" r="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <circle cx="58" cy="53" r="5.2" fill="#111"/>
+            <circle cx="56" cy="50" r="2.2" fill="#fff"/>
+
+            <circle cx="84" cy="52" r="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <circle cx="86" cy="53" r="5.2" fill="#111"/>
+            <circle cx="84" cy="50" r="2.2" fill="#fff"/>
+
+            <!-- Innocent silly smile -->
+            <path d="M60 72 Q70 83 80 72" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- 2. Shocked Face (Eyes huge, mouth gasping) -->
+          <g id="c1-face-shock" class="face-shock">
+            <circle cx="54" cy="50" r="15" fill="#fff" stroke="#111" stroke-width="3.5"/>
+            <circle cx="54" cy="50" r="3.2" fill="#111"/>
+
+            <circle cx="86" cy="50" r="15" fill="#fff" stroke="#111" stroke-width="3.5"/>
+            <circle cx="86" cy="50" r="3.2" fill="#111"/>
+
+            <!-- Gasping mouth -->
+            <ellipse cx="70" cy="76" rx="8" ry="11" fill="#111"/>
+          </g>
+
+          <!-- 3. Dizzy Spinning Eyes -->
+          <g id="c1-face-dizzy" class="face-dizzy">
+            <g transform="translate(56, 52)">
+              <circle r="12" fill="#fff" stroke="#111" stroke-width="2.5"/>
+              <path class="spiral-eye" d="M0 0 Q3 3 0 6 Q-6 3 -3 -3 Q3 -6 6 0" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(84, 52)">
+              <circle r="12" fill="#fff" stroke="#111" stroke-width="2.5"/>
+              <path class="spiral-eye" d="M0 0 Q3 3 0 6 Q-6 3 -3 -3 Q3 -6 6 0" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            </g>
+            <!-- Wobbly mouth -->
+            <path d="M58 75 Q64 70 70 76 T82 73" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- 4. Awkward Sideways Glance -->
+          <g id="c1-face-side" class="face-side">
+            <circle cx="56" cy="52" r="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <circle cx="63" cy="53" r="4.8" fill="#111"/>
+            <circle cx="62" cy="51" r="1.8" fill="#fff"/>
+
+            <circle cx="84" cy="52" r="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <circle cx="91" cy="53" r="4.8" fill="#111"/>
+            <circle cx="90" cy="51" r="1.8" fill="#fff"/>
+
+            <!-- Small embarrassed mouth -->
+            <line x1="64" y1="74" x2="76" y2="74" stroke="#111" stroke-width="3" stroke-linecap="round"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <!-- ── CHARACTER 2 (Enters Right) ────────────────────────────────── -->
+    <div class="cartoon-char" id="char2">
+
+      <!-- Orbiting Stars (Dizzy state) -->
+      <div class="orbit-stars" id="orbit2">
+        <svg class="orbit-star" viewBox="0 0 24 24" fill="#FFD700" stroke="#111" stroke-width="2">
+          <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
+        </svg>
+        <svg class="orbit-star" viewBox="0 0 24 24" fill="#FF8A00" stroke="#111" stroke-width="2">
+          <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
+        </svg>
+        <svg class="orbit-star" viewBox="0 0 24 24" fill="#FFD700" stroke="#111" stroke-width="2">
+          <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/>
+        </svg>
+      </div>
+
+      <svg class="char-svg" viewBox="0 0 140 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Standing / Walking Pose -->
+        <g id="c2-pose-walk" class="pose-stand">
+          <!-- Simple Thin Body -->
+          <line x1="70" y1="94" x2="70" y2="146" stroke="#111" stroke-width="4.5" stroke-linecap="round"/>
+          <!-- Swinging Arms -->
+          <path id="c2-arm-l" d="M70 102 L46 130" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          <path id="c2-arm-r" d="M70 102 L94 130" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          <!-- Swinging Legs -->
+          <path id="c2-leg-l" d="M70 146 L52 192 L40 192" stroke="#111" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path id="c2-leg-r" d="M70 146 L88 192 L100 192" stroke="#111" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+
+        <!-- Sitting Flat Pose -->
+        <g id="c2-pose-sit" class="pose-sit">
+          <line x1="70" y1="94" x2="70" y2="152" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+          <path d="M70 105 L40 142 L32 152" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          <path d="M70 105 L100 142 L108 152" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+          <path d="M70 152 L36 172 L22 170" stroke="#111" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M70 152 L104 172 L118 170" stroke="#111" stroke-width="4.5" stroke-linecap="round"/>
+        </g>
+
+        <!-- Head & Face (Slightly different personality) -->
+        <g id="c2-head-group">
+          <!-- 2 Spiky hairs -->
+          <path d="M64 17 L58 4 M74 17 L78 5" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="70" cy="55" r="38" fill="#ffffff" stroke="#111111" stroke-width="4.2"/>
+
+          <!-- 1. Normal Face (Slightly quirky smirk) -->
+          <g id="c2-face-normal" class="face-normal">
+            <circle cx="56" cy="52" r="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <circle cx="58" cy="53" r="5" fill="#111"/>
+            <circle cx="56" cy="50" r="2" fill="#fff"/>
+
+            <circle cx="84" cy="52" r="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <circle cx="86" cy="53" r="5" fill="#111"/>
+            <circle cx="84" cy="50" r="2" fill="#fff"/>
+
+            <!-- Quirky corner smile -->
+            <path d="M60 74 Q74 81 83 69" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- 2. Shocked Face -->
+          <g id="c2-face-shock" class="face-shock">
+            <circle cx="54" cy="50" r="15" fill="#fff" stroke="#111" stroke-width="3.5"/>
+            <circle cx="54" cy="50" r="3.2" fill="#111"/>
+
+            <circle cx="86" cy="50" r="15" fill="#fff" stroke="#111" stroke-width="3.5"/>
+            <circle cx="86" cy="50" r="3.2" fill="#111"/>
+
+            <ellipse cx="70" cy="76" rx="8" ry="11" fill="#111"/>
+          </g>
+
+          <!-- 3. Dizzy Face -->
+          <g id="c2-face-dizzy" class="face-dizzy">
+            <g transform="translate(56, 52)">
+              <circle r="12" fill="#fff" stroke="#111" stroke-width="2.5"/>
+              <path class="spiral-eye" d="M0 0 Q3 3 0 6 Q-6 3 -3 -3 Q3 -6 6 0" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(84, 52)">
+              <circle r="12" fill="#fff" stroke="#111" stroke-width="2.5"/>
+              <path class="spiral-eye" d="M0 0 Q3 3 0 6 Q-6 3 -3 -3 Q3 -6 6 0" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+            </g>
+            <path d="M58 75 Q64 70 70 76 T82 73" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- 4. Sideways Glance -->
+          <g id="c2-face-side" class="face-side">
+            <circle cx="56" cy="52" r="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <circle cx="63" cy="53" r="4.8" fill="#111"/>
+            <circle cx="62" cy="51" r="1.8" fill="#fff"/>
+
+            <circle cx="84" cy="52" r="11" fill="#fff" stroke="#111" stroke-width="3"/>
+            <circle cx="91" cy="53" r="4.8" fill="#111"/>
+            <circle cx="90" cy="51" r="1.8" fill="#fff"/>
+
+            <line x1="64" y1="74" x2="76" y2="74" stroke="#111" stroke-width="3" stroke-linecap="round"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <!-- ── SKIDDING BRAKE SMOKE PUFFS ────────────────────────────────── -->
+    <svg class="skid-puff" id="skid-l" viewBox="0 0 50 30">
+      <path d="M5 25 Q15 5 25 18 Q35 10 45 25 Z" fill="#eee" stroke="#111" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>
+    <svg class="skid-puff" id="skid-r" viewBox="0 0 50 30">
+      <path d="M5 25 Q15 5 25 18 Q35 10 45 25 Z" fill="#eee" stroke="#111" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>
+
+    <!-- ── EXTREME COMIC COLLISION FX ────────────────────────────────── -->
+    <div id="impact-fx">
+      <!-- Comic Yellow Starburst Rays -->
+      <svg class="impact-rays" viewBox="0 0 300 300">
+        <polygon points="150,10 175,95 255,40 205,120 290,145 210,180 270,250 185,215 155,290 120,210 45,260 90,185 10,155 90,120 30,50 115,85"
+                 fill="#FFE600" stroke="#111" stroke-width="4.5" stroke-linejoin="round"/>
+      </svg>
+
+      <!-- Multi-Lobed Cartoon Smoke Cloud -->
+      <svg viewBox="0 0 280 280" class="smoke-puff-group" style="position:absolute;inset:0;">
+        <!-- Poking out cartoon arms & legs -->
+        <path d="M30 180 L10 210 M250 180 L270 210 M100 20 L80 5 M180 20 L200 5" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+        <!-- Main white cloud blobs -->
+        <circle cx="140" cy="140" r="62" fill="#fff" stroke="#111" stroke-width="4.5"/>
+        <circle cx="95"  cy="130" r="44" fill="#fff" stroke="#111" stroke-width="4.5"/>
+        <circle cx="185" cy="130" r="44" fill="#fff" stroke="#111" stroke-width="4.5"/>
+        <circle cx="120" cy="90"  r="42" fill="#fff" stroke="#111" stroke-width="4.5"/>
+        <circle cx="160" cy="90"  r="42" fill="#fff" stroke="#111" stroke-width="4.5"/>
+        <circle cx="115" cy="180" r="40" fill="#fff" stroke="#111" stroke-width="4.5"/>
+        <circle cx="165" cy="180" r="40" fill="#fff" stroke="#111" stroke-width="4.5"/>
+      </svg>
+
+      <!-- Comic Lightning Bolts & Small Stars Radiating Out -->
+      <svg class="flying-spark" id="spark1" viewBox="0 0 32 32" style="width:34px;height:34px;">
+        <polygon points="16,2 20,12 30,12 22,19 25,29 16,23 7,29 10,19 2,12 12,12" fill="#FFD700" stroke="#111" stroke-width="2"/>
+      </svg>
+      <svg class="flying-spark" id="spark2" viewBox="0 0 32 32" style="width:28px;height:28px;">
+        <polygon points="18,2 8,16 16,16 12,30 26,14 18,14" fill="#FF4500" stroke="#111" stroke-width="2"/>
+      </svg>
+      <svg class="flying-spark" id="spark3" viewBox="0 0 32 32" style="width:30px;height:30px;">
+        <polygon points="16,2 20,12 30,12 22,19 25,29 16,23 7,29 10,19 2,12 12,12" fill="#FFD700" stroke="#111" stroke-width="2"/>
+      </svg>
+      <svg class="flying-spark" id="spark4" viewBox="0 0 32 32" style="width:28px;height:28px;">
+        <polygon points="18,2 8,16 16,16 12,30 26,14 18,14" fill="#FF8A00" stroke="#111" stroke-width="2"/>
+      </svg>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  CAMERA SCREEN: LIVE DETECTOR & PAST SCORE DASHBOARD                -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="cam-screen">
+
+  <!-- Top Navbar -->
+  <header class="cam-nav">
+    <div class="cam-brand">
+      <span>Kannum Kannum</span>
+      <span style="font-size:16px;color:rgba(255,255,255,0.4);font-family:'Nunito';font-weight:700;">• Blink Engine</span>
+    </div>
+    <div class="badge-live" id="live-indicator">Active Tracker</div>
+  </header>
+
+  <!-- Main Grid Area -->
+  <main class="cam-layout">
+
+    <!-- Left Column: Video Feed & Real-time Counter -->
+    <section class="cam-main-station">
+      <div class="counter-display">
+        <span class="counter-label">Current Session Blinks</span>
+        <div id="blink-count">0</div>
+      </div>
+
+      <div class="feed-container">
+        <video id="webcam" playsinline autoplay muted></video>
+        <div class="cam-overlay-guide">
+          <div class="eye-guide-oval"></div>
+        </div>
+      </div>
+
+      <!-- Controls Row: Stop, Restart, Reset -->
+      <div class="cam-controls">
+        <button class="btn-ctrl" id="btn-stop-cam">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+          </svg>
+          Stop Camera
+        </button>
+
+        <button class="btn-ctrl" id="btn-restart-cam">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5,3 19,12 5,21"></polygon>
+          </svg>
+          Restart Camera
+        </button>
+
+        <button class="btn-ctrl" id="btn-reset-cam">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          Reset Count
+        </button>
+      </div>
+
+      <!-- Status & Error Prompts -->
+      <div class="status-msg" id="cam-status">Ready to initialize camera...</div>
+      <div class="error-msg" id="cam-error"></div>
+    </section>
+
+    <!-- Right Column: Past Scores History Panel -->
+    <aside class="history-panel">
+      <div class="history-header">
+        <div class="history-title">
+          <span>🏆 Score History</span>
+        </div>
+        <button id="btn-clear-history" title="Clear all past scores">Clear History</button>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="history-stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Best Score</div>
+          <div class="stat-value" id="stat-best">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Sessions</div>
+          <div class="stat-value" id="stat-sessions">0</div>
+        </div>
+      </div>
+
+      <!-- Past Scores List -->
+      <div class="scores-list-container" id="scores-list">
+        <!-- Dynamically populated via JS -->
+      </div>
+    </aside>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  SCRIPTS                                                           -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<script type="module">
+import BlinkDetector from './blink-detector.js';
+
+/* ── DOM Elements ─────────────────────────────────────────────────── */
+const landing      = document.getElementById('landing');
+const btnSkip      = document.getElementById('btn-skip');
+const heroCta      = document.getElementById('hero-cta');
+const btnHeroCam   = document.getElementById('btn-hero-cam');
+
+const char1        = document.getElementById('char1');
+const char2        = document.getElementById('char2');
+const orbit1       = document.getElementById('orbit1');
+const orbit2       = document.getElementById('orbit2');
+const impactFx     = document.getElementById('impact-fx');
+const skidL        = document.getElementById('skid-l');
+const skidR        = document.getElementById('skid-r');
+
+const camScreen    = document.getElementById('cam-screen');
+const video        = document.getElementById('webcam');
+const countEl      = document.getElementById('blink-count');
+const statusEl     = document.getElementById('cam-status');
+const errorEl      = document.getElementById('cam-error');
+const btnStopCam   = document.getElementById('btn-stop-cam');
+const btnRestartCam= document.getElementById('btn-restart-cam');
+const btnResetCam  = document.getElementById('btn-reset-cam');
+
+const scoresList   = document.getElementById('scores-list');
+const statBest     = document.getElementById('stat-best');
+const statSessions = document.getElementById('stat-sessions');
+const btnClearHist = document.getElementById('btn-clear-history');
+
+/* ── 2D CARTOON HERO ANIMATION SEQUENCER (10-Second Storyline) ─────── */
+let animTimeouts = [];
+
+function clearAllAnimTimeouts() {
+  animTimeouts.forEach(id => clearTimeout(id));
+  animTimeouts = [];
+}
+
+function setFace(charEl, type) {
+  // type: 'normal' | 'shock' | 'dizzy' | 'side'
+  charEl.querySelectorAll('.face-normal, .face-shock, .face-dizzy, .face-side').forEach(el => {
+    el.style.display = 'none';
+  });
+  const target = charEl.querySelector(`.face-${type}`);
+  if (target) target.style.display = 'block';
+}
+
+function setPose(charEl, pose) {
+  // pose: 'stand' | 'sit'
+  charEl.querySelectorAll('.pose-stand, .pose-sit').forEach(el => {
+    el.style.display = 'none';
+  });
+  const target = charEl.querySelector(`.pose-${pose}`);
+  if (target) target.style.display = 'block';
+}
+
+function startCartoonSequence() {
+  clearAllAnimTimeouts();
+
+  // Initial resets
+  setFace(char1, 'normal');
+  setFace(char2, 'normal');
+  setPose(char1, 'stand');
+  setPose(char2, 'stand');
+  orbit1.style.display = 'none';
+  orbit2.style.display = 'none';
+  impactFx.style.opacity = '0';
+  impactFx.style.transform = 'translate(-50%, -50%) scale(0)';
+  skidL.style.opacity = '0';
+  skidR.style.opacity = '0';
+  heroCta.classList.remove('reveal');
+
+  // Start Positions
+  char1.style.transition = 'none';
+  char2.style.transition = 'none';
+  char1.style.transform = 'translateX(-120vw)';
+  char2.style.transform = 'translateX(120vw) scaleX(-1)';
+
+  void char1.offsetWidth; // force reflow
+
+  // ── 0.0s – 2.0s: Casual Walk In from Extreme Sides ──
+  // Character 1 walks to -280px, Character 2 walks to +280px
+  char1.style.transition = 'transform 2s linear';
+  char2.style.transition = 'transform 2s linear';
+  char1.style.transform = 'translateX(-280px)';
+  char2.style.transform = 'translateX(280px) scaleX(-1)';
+
+  // Continuous leg & arm swings
+  animateWalkingLegs(true);
+
+  // ── 2.0s – 4.0s: Walk Closer, Faster, Unaware ──
+  animTimeouts.push(setTimeout(() => {
+    char1.style.transition = 'transform 2s ease-in';
+    char2.style.transition = 'transform 2s ease-in';
+    char1.style.transform = 'translateX(-75px)';
+    char2.style.transform = 'translateX(75px) scaleX(-1)';
+  }, 2000));
+
+  // ── 4.0s – 5.0s: Suddenly Notice Each Other! ──
+  animTimeouts.push(setTimeout(() => {
+    // Stop walking animation
+    animateWalkingLegs(false);
+
+    // Shocked faces: eyes bug out!
+    setFace(char1, 'shock');
+    setFace(char2, 'shock');
+
+    // Bodies lean backward drastically with brake anticipation
+    char1.style.transition = 'transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1)';
+    char2.style.transition = 'transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1)';
+    char1.style.transform = 'translateX(-50px) rotate(-18deg) scaleY(1.1)';
+    char2.style.transform = 'translateX(50px) scaleX(-1) rotate(-18deg) scaleY(1.1)';
+
+    // Show skid brake dust puffs
+    skidL.style.opacity = '1';
+    skidR.style.opacity = '1';
+  }, 4000));
+
+  // Inertia carries them into final lunge at 4.65s
+  animTimeouts.push(setTimeout(() => {
+    char1.style.transition = 'transform 0.35s ease-in';
+    char2.style.transition = 'transform 0.35s ease-in';
+    char1.style.transform = 'translateX(-12px) rotate(14deg) scaleX(1.15)';
+    char2.style.transform = 'translateX(12px) scaleX(-1) rotate(14deg) scaleX(1.15)';
+  }, 4650));
+
+  // ── 5.0s – 6.0s: EXTREME COMIC COLLISION IN THE CENTER! ──
+  animTimeouts.push(setTimeout(() => {
+    skidL.style.opacity = '0';
+    skidR.style.opacity = '0';
+
+    // Squash & stretch characters on impact
+    char1.style.transform = 'translateX(-22px) scale(0.7, 1.3) rotate(-8deg)';
+    char2.style.transform = 'translateX(22px) scaleX(-1) scale(0.7, 1.3) rotate(-8deg)';
+
+    // Explode Comic Smoke Cloud & Yellow Impact Rays
+    impactFx.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.4), opacity 0.2s ease';
+    impactFx.style.transform = 'translate(-50%, -50%) scale(1.35)';
+    impactFx.style.opacity = '1';
+
+    // Radiate flying sparks/bolts
+    animateSparks();
+  }, 5000));
+
+  // ── 6.0s – 8.0s: Smoke Disappears, Sitting Dazed with Dizzy Eyes & Orbiting Stars ──
+  animTimeouts.push(setTimeout(() => {
+    // Smoke cloud poofs away
+    impactFx.style.transition = 'transform 0.35s ease-in, opacity 0.3s ease';
+    impactFx.style.transform = 'translate(-50%, -50%) scale(0.1)';
+    impactFx.style.opacity = '0';
+
+    // Both sitting flat on the ground
+    setPose(char1, 'sit');
+    setPose(char2, 'sit');
+    setFace(char1, 'dizzy');
+    setFace(char2, 'dizzy');
+
+    char1.style.transition = 'transform 0.4s ease';
+    char2.style.transition = 'transform 0.4s ease';
+    char1.style.transform = 'translateX(-55px) translateY(12px)';
+    char2.style.transform = 'translateX(55px) scaleX(-1) translateY(12px)';
+
+    // Show Orbiting Stars overhead
+    orbit1.style.display = 'block';
+    orbit2.style.display = 'block';
+  }, 6000));
+
+  // At 7.2s: Confused & embarrassed sideways look at each other
+  animTimeouts.push(setTimeout(() => {
+    orbit1.style.display = 'none';
+    orbit2.style.display = 'none';
+    setFace(char1, 'side');
+    setFace(char2, 'side');
+  }, 7200));
+
+  // At 7.5s: Reveal "Kannum Kannum" + "Turn on the Camera" hero CTA
+  animTimeouts.push(setTimeout(() => {
+    heroCta.classList.add('reveal');
+  }, 7500));
+
+  // ── 8.0s – 10.0s: Stand Up, Shake Off, Walk Away in Opposite Directions ──
+  animTimeouts.push(setTimeout(() => {
+    // Stand up
+    setPose(char1, 'stand');
+    setPose(char2, 'stand');
+    setFace(char1, 'normal');
+    setFace(char2, 'normal');
+
+    // Quick funny shake/shimmy
+    char1.style.transform = 'translateX(-65px) rotate(4deg)';
+    char2.style.transform = 'translateX(65px) scaleX(-1) rotate(4deg)';
+
+    setTimeout(() => {
+      // Flip directions: Character 1 faces left, Character 2 faces right!
+      char1.style.transform = 'translateX(-65px) scaleX(-1)';
+      char2.style.transform = 'translateX(65px) scaleX(1)';
+
+      // Resume walk animation
+      animateWalkingLegs(true);
+
+      // Walk smoothly off-screen as if nothing happened
+      char1.style.transition = 'transform 2.6s linear';
+      char2.style.transition = 'transform 2.6s linear';
+      char1.style.transform = 'translateX(-120vw) scaleX(-1)';
+      char2.style.transform = 'translateX(120vw) scaleX(1)';
+    }, 280);
+  }, 8200));
+}
+
+/* Walking Limb Animation Loop */
+let walkAnimId = null;
+let walkStartTime = 0;
+
+function animateWalkingLegs(active) {
+  if (!active) {
+    if (walkAnimId) cancelAnimationFrame(walkAnimId);
+    walkAnimId = null;
+    // reset limbs to neutral
+    ['c1-arm-l', 'c1-arm-r', 'c2-arm-l', 'c2-arm-r', 'c1-leg-l', 'c1-leg-r', 'c2-leg-l', 'c2-leg-r'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.transform = 'none';
+    });
+    return;
+  }
+
+  walkStartTime = performance.now();
+  function loop(now) {
+    const elapsed = (now - walkStartTime) / 1000;
+    const angle = Math.sin(elapsed * 9) * 22; // rapid cartoon walk swing
+
+    const c1ArmL = document.getElementById('c1-arm-l');
+    const c1ArmR = document.getElementById('c1-arm-r');
+    const c1LegL = document.getElementById('c1-leg-l');
+    const c1LegR = document.getElementById('c1-leg-r');
+
+    const c2ArmL = document.getElementById('c2-arm-l');
+    const c2ArmR = document.getElementById('c2-arm-r');
+    const c2LegL = document.getElementById('c2-leg-l');
+    const c2LegR = document.getElementById('c2-leg-r');
+
+    if (c1ArmL) c1ArmL.style.transform = `rotate(${-angle}deg) translate(0, ${Math.abs(angle)*0.1}px)`;
+    if (c1ArmR) c1ArmR.style.transform = `rotate(${angle}deg) translate(0, ${Math.abs(angle)*0.1}px)`;
+    if (c1LegL) c1LegL.style.transform = `rotate(${angle}deg)`;
+    if (c1LegR) c1LegR.style.transform = `rotate(${-angle}deg)`;
+
+    if (c2ArmL) c2ArmL.style.transform = `rotate(${-angle}deg)`;
+    if (c2ArmR) c2ArmR.style.transform = `rotate(${angle}deg)`;
+    if (c2LegL) c2LegL.style.transform = `rotate(${angle}deg)`;
+    if (c2LegR) c2LegR.style.transform = `rotate(${-angle}deg)`;
+
+    walkAnimId = requestAnimationFrame(loop);
+  }
+  walkAnimId = requestAnimationFrame(loop);
+}
+
+function animateSparks() {
+  const sparks = [
+    { el: document.getElementById('spark1'), x: -80, y: -70 },
+    { el: document.getElementById('spark2'), x: 80,  y: -75 },
+    { el: document.getElementById('spark3'), x: -75, y: 55 },
+    { el: document.getElementById('spark4'), x: 85,  y: 60 }
+  ];
+
+  sparks.forEach(s => {
+    if (!s.el) return;
+    s.el.style.transition = 'none';
+    s.el.style.transform = 'translate(-50%, -50%) scale(0.2)';
+    s.el.style.opacity = '1';
+
+    void s.el.offsetWidth;
+
+    s.el.style.transition = 'transform 0.45s ease-out, opacity 0.45s ease-out';
+    s.el.style.transform = `translate(calc(-50% + ${s.x}px), calc(-50% + ${s.y}px)) scale(1.3)`;
+    s.el.style.opacity = '0';
+  });
+}
+
+// Start cartoon animation on initial load
+startCartoonSequence();
+
+/* ── PAST SCORES SYSTEM (localStorage) ────────────────────────────── */
+const STORAGE_KEY = 'kannum_blink_scores';
+
+function loadScores() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveScores(scores) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(scores.slice(0, 30)));
+  } catch (_) {}
+}
+
+function renderScores() {
+  const scores = loadScores();
+  scoresList.innerHTML = '';
+
+  if (scores.length === 0) {
+    scoresList.innerHTML = `
+      <div class="no-scores-msg">
+        <div style="font-size:24px;margin-bottom:6px;">👀</div>
+        No past scores yet.<br>Start the camera & blink to record your first score!
+      </div>`;
+    statBest.textContent = '0';
+    statSessions.textContent = '0';
+    return;
+  }
+
+  const bestVal = Math.max(...scores.map(s => s.blinks));
+  statBest.textContent = bestVal;
+  statSessions.textContent = scores.length;
+
+  scores.forEach(s => {
+    const isBest = s.blinks === bestVal && bestVal > 0;
+    const item = document.createElement('div');
+    item.className = `score-item ${isBest ? 'is-best' : ''}`;
+    item.innerHTML = `
+      <div class="score-item-left">
+        <span class="score-session-tag">Session #${s.sessionNum}</span>
+        <span class="score-timestamp">${s.timestamp}</span>
+      </div>
+      <div class="score-item-val">${s.blinks} <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.4)">blinks</span></div>
+    `;
+    scoresList.appendChild(item);
+  });
+}
+
+function recordSessionScore(blinkCount) {
+  if (blinkCount <= 0) return; // Only save meaningful attempts
+  const scores = loadScores();
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+  const newEntry = {
+    id: Date.now(),
+    sessionNum: scores.length + 1,
+    blinks: blinkCount,
+    timestamp: `${dateStr}, ${timeStr}`
+  };
+
+  scores.unshift(newEntry); // Newest first
+  saveScores(scores);
+  renderScores();
+}
+
+btnClearHist.addEventListener('click', () => {
+  if (confirm('Are you sure you want to clear your score history?')) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderScores();
+  }
+});
+
+// Render scores on startup
+renderScores();
+
+/* ── BLINK DETECTOR INITIALIZATION ─────────────────────────────────── */
+const detector = new BlinkDetector({
+  videoElement: video,
+
+  onBlink() {
+    countEl.classList.remove('bump');
+    void countEl.offsetWidth;
+    countEl.classList.add('bump');
+  },
+
+  onCountChange(n) {
+    countEl.textContent = n;
+  },
+
+  onStatusChange(m) {
+    statusEl.textContent = m;
+    errorEl.textContent = '';
+  },
+
+  onError(e) {
+    errorEl.textContent = e.message;
+    btnStopCam.style.display    = 'none';
+    btnRestartCam.style.display = 'inline-flex';
+  },
+
+  earThreshold:      0.20,
+  consecutiveFrames: 2,
+});
+
+window.blinkDetector = detector;
+
+/* ── TRANSITION TO CAMERA SCREEN ───────────────────────────────────── */
+async function launchCameraSession() {
+  clearAllAnimTimeouts();
+  animateWalkingLegs(false);
+
+  landing.classList.add('out');
+  camScreen.classList.add('on');
+
+  btnStopCam.style.display    = 'inline-flex';
+  btnRestartCam.style.display = 'none';
+
+  try {
+    await detector.startCamera();
+  } catch (err) {
+    console.error('Camera startup error:', err);
+  }
+
+  setTimeout(() => { landing.style.display = 'none'; }, 850);
+}
+
+btnHeroCam.addEventListener('click', launchCameraSession);
+btnSkip.addEventListener('click', launchCameraSession);
+
+/* ── CAMERA CONTROLS: STOP, RESTART, RESET ─────────────────────────── */
+btnStopCam.addEventListener('click', () => {
+  // Save past score if > 0
+  const currentScore = detector.blinkCount;
+  recordSessionScore(currentScore);
+
+  detector.stopCamera();
+
+  // Toggle buttons: Hide stop, show restart
+  btnStopCam.style.display    = 'none';
+  btnRestartCam.style.display = 'inline-flex';
+});
+
+btnRestartCam.addEventListener('click', async () => {
+  detector.resetCount();
+  errorEl.textContent = '';
+
+  btnRestartCam.style.display = 'none';
+  btnStopCam.style.display    = 'inline-flex';
+
+  try {
+    await detector.startCamera();
+  } catch (err) {
+    btnRestartCam.style.display = 'inline-flex';
+    btnStopCam.style.display    = 'none';
+  }
+});
+
+btnResetCam.addEventListener('click', () => {
+  detector.resetCount();
+});
+</script>
+
+</body>
+</html>
