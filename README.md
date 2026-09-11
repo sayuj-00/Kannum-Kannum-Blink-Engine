@@ -34,16 +34,18 @@ For Software:
 ### Implementation
 For Software:
 # Installation
-[commands]
+
+git clone https://github.com/sayuj-00/Kannum-Kannum-Blink-Engine.git
+cd Kannum-Kannum-Blink-Engine
 
 # Run
-
+npm run dev
 
 ### Project Documentation
 For Software:
 
 # Screenshots (Add at least 3)
-![Screenshot1](Add screenshot 1 here with proper name)
+![Screenshot1](Add screenshot 1 here with proper name
 *Add caption explaining what this shows*
 
 ![Screenshot2](Add screenshot 2 here with proper name)
