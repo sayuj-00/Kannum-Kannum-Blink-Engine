@@ -2,39 +2,34 @@
 
 
 
-# [Project Name] 🎯
+# Kannum Kannum 🎯
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: NEXUX
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Team Lead: Sayuj Peter Sajan - Jyothi Engineering College
+- Member 2: Muhammed Shiyas M - Jyothi Engineering College
 
 ### Project Description
-[2-3 lines about what your project does]
+Kannum Kannum is an over-engineered real-time webcam blink counter powered by Google MediaPipe Face Landmarker. Featuring a slapstick 2D cartoon hero animation and a delightfully inverted counting logic (a slow blink counts as 2, while a rapid double blink counts as 1), it turns involuntary eyelid twitches into a competitive sport with persistent session score tracking.
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+For centuries, humans have blinked upwards of 20,000 times a day completely unmonitored and without any biometric accountability. Even worse, traditional arithmetic stubbornly dictates that "one blink equals one blink," entirely ignoring the emotional weight of a dramatic slow blink versus the nervous panic of a rapid double-flutter.
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+We deployed a full 468-point facial landmark computer vision model directly into the browser using Eye Aspect Ratio (EAR) geometry to judge eyelid velocity. If you execute a slow, deliberate blink, you are rewarded with 2 blinks. If you nervously spam two fast blinks, the system deducts a point to award you only 1 net blink. All of this is preceded by an exaggerated 10-second slapstick cartoon where two goofy stickmen collide into a cloud of smoke and dizzy orbiting stars before your camera even turns on.
 
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Languages used]
-- [Frameworks used]
-- [Libraries used]
-- [Tools used]
+-  JavaScript (ES6+ Modules), HTML5, CSS3
+- None
+- @mediapipe/tasks-vision (MediaPipe Face Landmarker), Web APIs (getUserMedia)
+- Node.js, serve, Visual Studio Code, Antigravity, Chrome DevTools
 
-For Hardware:
-- [List main components]
-- [List specifications]
-- [List tools required]
 
 ### Implementation
 For Software:
@@ -42,7 +37,7 @@ For Software:
 [commands]
 
 # Run
-[commands]
+
 
 ### Project Documentation
 For Software:
@@ -61,24 +56,8 @@ For Software:
 ![Workflow](Add your workflow/architecture diagram here)
 *Add caption explaining your workflow*
 
-For Hardware:
 
-# Schematic & Circuit
-![Circuit](Add your circuit diagram here)
-*Add caption explaining connections*
 
-![Schematic](Add your schematic diagram here)
-*Add caption explaining the schematic*
-
-# Build Photos
-![Components](Add photo of your components here)
-*List out all components shown*
-
-![Build](Add photos of build process here)
-*Explain the build steps*
-
-![Final](Add photo of final product here)
-*Explain the final build*
 
 ### Project Demo
 # Video
@@ -89,9 +68,9 @@ For Hardware:
 [Add any extra demo materials/links]
 
 ## Team Contributions
-- [Name 1]: [Specific contributions]
+- Sayuj Peter Sajan: 
 - [Name 2]: [Specific contributions]
-- [Name 3]: [Specific contributions]
+  
 
 ---
 Made with ❤️ at TinkerHub Useless Projects 
