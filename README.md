@@ -44,16 +44,25 @@ npm run dev
 ### Project Documentation
 For Software:
 
-# Screenshots (Add at least 3)
-![Screenshot1](Add screenshot 1 here with proper name
-*Add caption explaining what this shows*
+# Screenshots
 
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
+### Screenshot 1 — Landing Page
 
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+![Landing Page](screenshots/landing-page.png)
 
+*The landing page of Kannum Kannum Blink Engine, introducing the project and allowing the user to start the blink detection system.*
+
+### Screenshot 2 — Real-Time Blink Detection
+
+![Blink Detection](screenshots/blink-detection.png)
+
+*The application uses the webcam and MediaPipe Face Landmarker to detect the user's eyes and identify blinks in real time.*
+
+### Screenshot 3 — Blink Counter Result
+
+![Blink Result](screenshots/blink-result.png)
+
+*The application displays the detected blink count and the intentionally useless blink calculation.*
 # Diagrams
 ![Workflow](Add your workflow/architecture diagram here)
 *Add caption explaining your workflow*
@@ -63,15 +72,14 @@ For Software:
 
 ### Project Demo
 # Video
-[Add your demo video link here]
-*Explain what the video demonstrates*
+https://drive.google.com/file/d/1-iWSr7ED3Wk1wWs6fCgaQozqkd9x2d5q/view?usp=sharing
+*The video demonstrates the Kannum Kannum Blink Engine in action, including starting the webcam, detecting real-time eye blinks using MediaPipe Face Landmarker, counting the detected blinks, and applying the project's intentionally useless 2-blinks-equals-1-blink rule.*
 
-# Additional Demos
-[Add any extra demo materials/links]
+
 
 ## Team Contributions
-- Sayuj Peter Sajan: 
-- [Name 2]: [Specific contributions]
+- Sayuj Peter Sajan: ** Developed the real-time blink detection system using MediaPipe Face Landmarker, implemented eye landmark tracking and EAR-based blink detection, integrated webcam functionality, and handled the core project implementation.
+- Muhammed Shiyas M: ** Designed and developed the user interface, animations, visual elements, and overall user experience of the application.
   
 
 ---
