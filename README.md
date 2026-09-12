@@ -64,8 +64,8 @@ For Software:
 
 *The application displays the detected blink count and the intentionally useless blink calculation.*
 # Diagrams
-![Workflow](Add your workflow/architecture diagram here)
-*Add caption explaining your workflow*
+![Workflow](screenshots/flowchart.png)
+*The workflow illustrates the complete process of Kannum Kannum Blink Engine, from webcam access and real-time facial landmark detection using MediaPipe to eye-aspect-ratio analysis, blink detection, and application of the intentionally useless rule where every two actual blinks are counted as one official blink*
 
 
 
